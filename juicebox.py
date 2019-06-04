@@ -93,7 +93,7 @@ class Juicebox:
         return true
 
 
-    def end_trans(self):
+    def end(self, json_obj):
         GPIO.output(pin_connect, True)
         GPIO.output(pin_led_ring, True)
         trans_id = json_obj[u'trans_id']
@@ -136,13 +136,11 @@ class Juicebox:
 
 # this is from the MFC library, it is to ensure safe exit
 continue_reading = True
-
 def end_read(signal, frame):
     print("Ctrl+C captured, ending read.", file=sys.stderr)
     continue_reading = False
     quit()
     GPIO.cleanup()
-
 
 signal.signal(signal.SIGINT, end_read)
 MIFAREReader = MFRC522.MFRC522()
@@ -155,7 +153,7 @@ def main():
     GPIO.add_event_detect(pin_button, GPIO.FALLING)
 
     while continue_reading:
-        if (GPIO.event_detected(pin_button) && phase2 == false): # if the button is pressed
+        if (GPIO.event_detected(pin_button) and phase2 == false): # if the button is pressed
             valid_id = juicebox.get_details(juicebox.rid_1) # get operator details
             if (valid_id):
                 juicebox.phase2 = true # continue on to read for employee details
@@ -167,7 +165,7 @@ def main():
                 print("Status:", transaction, file=sys.stderr)
                 try:
                     if transaction[u'authorized'] == "Y": # if the employee is the authorized level
-                        juicebox.end_transaction()
+                        juicebox.end(transaction)
                         juicebox.refresh()
                         continue
                     else:
