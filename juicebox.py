@@ -1,4 +1,7 @@
 #!/usr/bin/python2.7
+##@package juicebox
+#
+#A device to intake user credentials, authenticate against granted rights, and enable/disable usage based on those.
 
 from __future__ import print_function
 
@@ -14,7 +17,7 @@ import requests
 
 import MFRC522
 
-# Debug logging
+# Debug logging, do not modify
 httplib.HTTPConnection.debuglevel = 1
 logging.basicConfig(format='%(asctime)s %(message)s')
 logging.getLogger().setLevel(logging.DEBUG)
@@ -39,22 +42,35 @@ GPIO.output(pin_led_ring, False)
 
 headers = {'authorization': "FLUD_KEY"}
 
+## The central object of the program. It contains data for the current session, and functions for communicating with the external database.
+#
+# Data stored within the Juicebox object includes:
+# - the RFID numbers for the operator and employee overseeing use of the device
+# - the user details for both indidivuals (including the employee's authorization level)
 class Juicebox:
 
+    ## The constructor.
     def __init__(self):    
+        ## the RFID number for the operator.
         self.rid_1 = ""
+        ## the RFID number for the employee.
         self.rid_2 = ""
+        ## the JSON object for the operator.
         self.operator = None
+        ## the JSON object for the employee.
         self.employee = None
-        self.transaction_id = ""
+        ## a variable for advancing the code flow to the second part of the for loop.
         self.phase2 = false
 
-
+    ## Grabs the RFID number from the user's card, then retrieves the details from the database corresponding to the given RFID.
+    # @param rid A variable which stores the RFID number for the user details being requested.
     def get_details(self, rid):
+        # communication with the RFID reader to retrieve the RFID number
         (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
         (status, uid) = MIFAREReader.MFRC522_Anticoll()
         if status == MIFAREReader.MI_OK:
             self.heart_beat()
+            # place the RFID in the parameter variable
             rid = str(uid[0]) + str(uid[1]) + str(uid[2]) + str(uid[3])
             print(user, "RFID:", rid, file=sys.stderr)
             
@@ -70,6 +86,7 @@ class Juicebox:
                 return false
 
             try:
+                ## The JSON object which holds the user details.
                 json_obj = json.loads(json.dumps(response))
                 print(user, "Level:", json_obj["role"], file=sys.stderr)
             except Exception:
@@ -78,7 +95,9 @@ class Juicebox:
 
         return true
 
-
+    ## Checks if the transaction is authorized, given the two users (operator and employee) trying to use the device.
+    # @param id_number the RFID number for the operator.
+    # @param id_number_2 the RFID number for the employee.
     def check_if_authorized(self, id_number, id_number_2):
         try:
             payload = {"type": "rfid_double", "number": id_number, "number_employee": id_number_2, "device": device_id}
@@ -92,11 +111,10 @@ class Juicebox:
 
         return true
 
-
-    def end(self, json_obj):
+    ## Runs if the transaction is successful. Logs the instance of the device's use to the external database.
+    def finish(self):
         GPIO.output(pin_connect, True)
         GPIO.output(pin_led_ring, True)
-        trans_id = json_obj[u'trans_id']
         time.sleep(0.5)
         GPIO.wait_for_edge(pin_button, GPIO.FALLING)
         payload = {"type": "end_transaction", "dev_id": device_id}
@@ -115,7 +133,9 @@ class Juicebox:
 
         return response
 
-
+    ## Creates a series of flashes around the LED ring, which is a signal with various meanings depending on use of the Juicebox.
+    #
+    # heartbeat() is called once when the operator scans their ID, once when an authorized employee scans their ID, and twice when a user with an unauthorized ID tries to scan their ID as an employee.
     def heart_beat(self):
         global pin_led_ring
         time.sleep(0.5)
@@ -127,7 +147,7 @@ class Juicebox:
         time.sleep(0.25)
         GPIO.output(pin_led_ring, False)
 
-
+    ## Resets all code-flow related variables.
     def refresh(self):
         self.phase2 = false
 
@@ -165,7 +185,7 @@ def main():
                 print("Status:", transaction, file=sys.stderr)
                 try:
                     if transaction[u'authorized'] == "Y": # if the employee is the authorized level
-                        juicebox.end(transaction)
+                        juicebox.finish()
                         juicebox.refresh()
                         continue
                     else:
