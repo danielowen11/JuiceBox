@@ -173,7 +173,7 @@ def main():
     GPIO.add_event_detect(pin_button, GPIO.FALLING)
 
     while continue_reading:
-        if (GPIO.event_detected(pin_button) and phase2 == False): # if the button is pressed
+        if (GPIO.event_detected(pin_button) and juicebox.phase2 == False): # if the button is pressed
             valid_id = juicebox.get_details(juicebox.rid_1) # get operator details
             if (valid_id):
                 juicebox.phase2 = True # continue on to read for employee details
