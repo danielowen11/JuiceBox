@@ -60,7 +60,7 @@ class Juicebox:
         ## the JSON object for the employee.
         self.employee = None
         ## a variable for advancing the code flow to the second part of the for loop.
-        self.phase2 = false
+        self.phase2 = False
 
     ## Grabs the RFID number from the user's card, then retrieves the details from the database corresponding to the given RFID.
     # @param rid A variable which stores the RFID number for the user details being requested.
@@ -83,7 +83,7 @@ class Juicebox:
             except Exception:
                 response = "Check Status: Unable to connect. Verify connection."
                 print(response, file=sys.stderr)
-                return false
+                return False
 
             try:
                 ## The JSON object which holds the user details.
@@ -91,9 +91,9 @@ class Juicebox:
                 print(user, "Level:", json_obj["role"], file=sys.stderr)
             except Exception:
                 print("JSON: ID parse failure", file=sys.stderr)
-                return false
+                return False
 
-        return true
+        return True
 
     ## Checks if the transaction is authorized, given the two users (operator and employee) trying to use the device.
     # @param id_number the RFID number for the operator.
@@ -107,9 +107,9 @@ class Juicebox:
         except Exception:
             response = "failed to request authorization of 2 different IDs from server.... check connection and url"
             print(response, file=sys.stderr)
-            return false
+            return False
 
-        return true
+        return True
 
     ## Runs if the transaction is successful. Logs the instance of the device's use to the external database.
     def finish(self):
@@ -149,7 +149,7 @@ class Juicebox:
 
     ## Resets all code-flow related variables.
     def refresh(self):
-        self.phase2 = false
+        self.phase2 = False
 
 # end of Juicebox Class
 
@@ -173,10 +173,10 @@ def main():
     GPIO.add_event_detect(pin_button, GPIO.FALLING)
 
     while continue_reading:
-        if (GPIO.event_detected(pin_button) and phase2 == false): # if the button is pressed
+        if (GPIO.event_detected(pin_button) and phase2 == False): # if the button is pressed
             valid_id = juicebox.get_details(juicebox.rid_1) # get operator details
             if (valid_id):
-                juicebox.phase2 = true # continue on to read for employee details
+                juicebox.phase2 = True # continue on to read for employee details
 
         if (juicebox.phase2):
             valid_id = juicebox.get_details(juicebox.rid_2) # get employee details
