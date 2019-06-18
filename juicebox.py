@@ -74,7 +74,7 @@ class Juicebox:
             rid = str(uid[0]) + str(uid[1]) + str(uid[2]) + str(uid[3])
             # check if the user being read is a student or employee by using the "phase2" variable
             # to know where it is in the while statement 
-            user = (phase2) ? "Operator" : "Staff"
+            user = "Staff" if phase2 else "Operator"
             print(user, "RFID:", rid, file=sys.stderr)
             
             try:
@@ -123,7 +123,7 @@ class Juicebox:
         time.sleep(0.5)
         GPIO.wait_for_edge(pin_button, GPIO.FALLING)
         payload = {"type": "end_transaction", "dev_id": device_id}
-        try:
+        try:used 
             r = requests.request("POST", serverURL, json=payload, headers=headers)
             response = r.json()
 
