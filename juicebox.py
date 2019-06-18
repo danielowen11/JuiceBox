@@ -123,7 +123,7 @@ class Juicebox:
         time.sleep(0.5)
         GPIO.wait_for_edge(pin_button, GPIO.FALLING)
         payload = {"type": "end_transaction", "dev_id": device_id}
-        try:used 
+        try:
             r = requests.request("POST", serverURL, json=payload, headers=headers)
             response = r.json()
 
