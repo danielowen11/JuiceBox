@@ -92,8 +92,10 @@ class Juicebox:
             except Exception:
                 print("JSON: ID parse failure", file=sys.stderr)
                 return False
+            
+            return True
 
-        return True
+        return False
 
     ## Checks if the transaction is authorized, given the two users (operator and employee) trying to use the device.
     # @param id_number the RFID number for the operator.
