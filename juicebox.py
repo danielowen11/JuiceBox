@@ -74,7 +74,7 @@ class Juicebox:
             rid = str(uid[0]) + str(uid[1]) + str(uid[2]) + str(uid[3])
             # check if the user being read is a student or employee by using the "phase2" variable
             # to know where it is in the while statement 
-            user = "Staff" if phase2 else "Operator"
+            user = "Staff" if self.phase2 else "Operator"
             print(user, "RFID:", rid, file=sys.stderr)
             
             try:
