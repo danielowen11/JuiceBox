@@ -72,6 +72,9 @@ class Juicebox:
             self.heart_beat()
             # place the RFID in the parameter variable
             rid = str(uid[0]) + str(uid[1]) + str(uid[2]) + str(uid[3])
+            # check if the user being read is a student or employee by using the "phase2" variable
+            # to know where it is in the while statement 
+            user = (phase2) ? "Operator" : "Staff"
             print(user, "RFID:", rid, file=sys.stderr)
             
             try:
