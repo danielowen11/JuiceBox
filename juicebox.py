@@ -112,9 +112,9 @@ class Juicebox:
         except Exception:
             response = "failed to request authorization of 2 different IDs from server.... check connection and url"
             print(response, file=sys.stderr)
-            return False
+            return response
 
-        return True
+        return response
 
     ## Runs if the transaction is successful. Logs the instance of the device's use to the external database.
     def finish(self):
