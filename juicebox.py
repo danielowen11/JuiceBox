@@ -55,16 +55,16 @@ class Juicebox:
         self.rid_1 = ""
         ## the RFID number for the employee.
         self.rid_2 = ""
-        ## the JSON object for the operator.
-        self.operator = None
-        ## the JSON object for the employee.
-        self.employee = None
+        ### the JSON object for the operator.
+        #self.operator = None
+        ### the JSON object for the employee.
+        #self.employee = None
         ## a variable for advancing the code flow to the second part of the for loop.
         self.phase2 = False
 
     ## Grabs the RFID number from the user's card, then retrieves the details from the database corresponding to the given RFID.
     # @param rid A variable which stores the RFID number for the user details being requested.
-    def get_details(self, rid):
+    def get_details(self):
         # communication with the RFID reader to retrieve the RFID number
         (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
         (status, uid) = MIFAREReader.MFRC522_Anticoll()
@@ -86,7 +86,7 @@ class Juicebox:
             except Exception:
                 response = "Check Status: Unable to connect. Verify connection."
                 print(response, file=sys.stderr)
-                return False
+                return False, 0
 
             try:
                 ## The JSON object which holds the user details.
@@ -94,11 +94,11 @@ class Juicebox:
                 print(user, "Level:", json_obj["role"], file=sys.stderr)
             except Exception:
                 print("JSON: ID parse failure", file=sys.stderr)
-                return False
+                return False, 0
             
-            return True
+            return True, rid
 
-        return False
+        return False, 0
 
     ## Checks if the transaction is authorized, given the two users (operator and employee) trying to use the device.
     # @param id_number the RFID number for the operator.
@@ -179,12 +179,12 @@ def main():
 
     while continue_reading:
         if (GPIO.event_detected(pin_button) and juicebox.phase2 == False): # if the button is pressed
-            valid_id = juicebox.get_details(juicebox.rid_1) # get operator details
+            valid_id, juicebox.rid_1 = juicebox.get_details() # get operator details
             if (valid_id):
                 juicebox.phase2 = True # continue on to read for employee details
 
         if (juicebox.phase2):
-            valid_id = juicebox.get_details(juicebox.rid_2) # get employee details
+            valid_id, juicebox.rid_2 = juicebox.get_details() # get employee details
             if (valid_id):
                 transaction = juicebox.check_if_authorized(juicebox.rid_1, juicebox.rid_2) # check if the employee ID is the authorized level
                 print("Status:", transaction, file=sys.stderr)
