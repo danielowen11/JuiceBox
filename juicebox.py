@@ -69,7 +69,6 @@ class Juicebox:
         (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
         (status, uid) = MIFAREReader.MFRC522_Anticoll()
         if status == MIFAREReader.MI_OK:
-            self.heart_beat()
             # place the RFID in the parameter variable
             rid = str(uid[0]) + str(uid[1]) + str(uid[2]) + str(uid[3])
             # check if the user being read is a student or employee by using the "phase2" variable
@@ -91,20 +90,25 @@ class Juicebox:
             except ConnectionError as e:
                 response = e + ": Unable to connect. Verify connection."
                 print(response, file=sys.stderr)
+                self.blink_twice()
                 return False, 0
             except HTTPError as e:
                 response = e + ": Request to HTTP server returned unsuccessful status code."
                 print(response, file=sys.stderr)
+                self.blink_twice()
                 return False, 0
             except ValueError as e:
                 response = e + ": JSON parse failure."
                 print(response, file=sys.stderr)
+                self.blink_twice()
                 return False, 0
             except Exception as e:
                 response = e + ": This exception in Juicebox.get_details() lacks error handling. Codebase is incomplete."
                 print(response, file=sys.stderr)
+                self.blink_twice()
                 return False, 0
             else:
+                self.blink()
                 return True, rid
 
         return False, 0
@@ -120,10 +124,12 @@ class Juicebox:
         except ConnectionError as e:
             response = e + ": Improper pair of RFID values entered, or Unable to connect."
             print(response, file=sys.stderr)
+            self.blink_twice()
             return response
         except Exception as e:
             response = e + ": This exception in Juicebox.check_if_authorized() lacks error handling. Codebase is incomplete."
             print(response, file=sys.stderr)
+            self.blink_twice()
             return response
         else:
             return response
@@ -141,10 +147,12 @@ class Juicebox:
         except ConnectionError as e:
             response = e + "Input to end transaction is somehow invalid, or Unable to connect."
             print(response, file=sys.stderr)
+            self.blink_twice()
             return response
         except Exception as e:
             response = e + ": This exception in Juicebox.finish() lacks error handling. Codebase is incomplete."
             print(response, file=sys.stderr)
+            self.blink_twice()
             return response
         else:
             print("End Transaction:", response, file=sys.stderr)
@@ -153,10 +161,16 @@ class Juicebox:
         GPIO.output(pin_led_ring, False)
         return response
 
-    ## Creates a series of flashes around the LED ring, which is a signal with various meanings depending on use of the Juicebox.
-    #
-    # heartbeat() is called once when the operator scans their ID, once when an authorized employee scans their ID, and twice when a user with an unauthorized ID tries to scan their ID as an employee.
-    def heart_beat(self):
+    ## Creates a flash on the button LED, which signals successful entry.
+    def blink(self):
+        time.sleep(0.5)
+        GPIO.output(pin_led_ring, True)
+        time.sleep(0.25)
+        GPIO.output(pin_led_ring, False)
+        time.sleep(0.5)
+
+    ## Creates two flashes on the button LED, which signals an incorrect prompt.
+    def blink_twice(self):
         global pin_led_ring
         time.sleep(0.5)
         GPIO.output(pin_led_ring, True)
@@ -209,7 +223,7 @@ def main():
                         juicebox.refresh()
                         continue
                     else:
-                        juicebox.heart_beat()
+                        juicebox.blink_twice()
                         juicebox.refresh()
                         continue
                 except Exception:
