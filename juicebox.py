@@ -81,22 +81,31 @@ class Juicebox:
                 payload = {"type": "check_status_rfid", "number": rid}
                 r = requests.request("POST", serverURL, json=payload, headers=headers)
                 response = r.json()
+
                 r.raise_for_status()
                 print(response, file=sys.stderr)
-            except Exception:
-                response = "Check Status: Unable to connect. Verify connection."
-                print(response, file=sys.stderr)
-                return False, 0
 
-            try:
                 ## The JSON object which holds the user details.
                 json_obj = json.loads(json.dumps(response))
                 print(user, "Level:", json_obj["role"], file=sys.stderr)
-            except Exception:
-                print("JSON: ID parse failure", file=sys.stderr)
+            except ConnectionError as e:
+                response = e + ": Unable to connect. Verify connection."
+                print(response, file=sys.stderr)
                 return False, 0
-            
-            return True, rid
+            except HTTPError as e:
+                response = e + ": Request to HTTP server returned unsuccessful status code."
+                print(response, file=sys.stderr)
+                return False, 0
+            except ValueError as e:
+                response = e + ": JSON parse failure."
+                print(response, file=sys.stderr)
+                return False, 0
+            except Exception as e:
+                response = e + ": This exception in Juicebox.get_details() lacks error handling. Codebase is incomplete."
+                print(response, file=sys.stderr)
+                return False, 0
+            else:
+                return True, rid
 
         return False, 0
 
@@ -108,13 +117,16 @@ class Juicebox:
             payload = {"type": "rfid_double", "number": id_number, "number_employee": id_number_2, "device": device_id}
             r = requests.request("POST", serverURL, json=payload, headers=headers)
             response = r.json()
-
-        except Exception:
-            response = "failed to request authorization of 2 different IDs from server.... check connection and url"
+        except ConnectionError as e:
+            response = e + ": Improper pair of RFID values entered, or Unable to connect."
             print(response, file=sys.stderr)
             return response
-
-        return response
+        except Exception as e:
+            response = e + ": This exception in Juicebox.check_if_authorized() lacks error handling. Codebase is incomplete."
+            print(response, file=sys.stderr)
+            return response
+        else:
+            return response
 
     ## Runs if the transaction is successful. Logs the instance of the device's use to the external database.
     def finish(self):
@@ -126,16 +138,19 @@ class Juicebox:
         try:
             r = requests.request("POST", serverURL, json=payload, headers=headers)
             response = r.json()
-
-        except Exception:
-            response = "could not end transaction"
+        except ConnectionError as e:
+            response = e + "Input to end transaction is somehow invalid, or Unable to connect."
             print(response, file=sys.stderr)
             return response
+        except Exception as e:
+            response = e + ": This exception in Juicebox.finish() lacks error handling. Codebase is incomplete."
+            print(response, file=sys.stderr)
+            return response
+        else:
+            print("End Transaction:", response, file=sys.stderr)
 
-        print("End Transaction:", response, file=sys.stderr)
         GPIO.output(pin_connect, False)
         GPIO.output(pin_led_ring, False)
-
         return response
 
     ## Creates a series of flashes around the LED ring, which is a signal with various meanings depending on use of the Juicebox.
