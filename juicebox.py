@@ -34,6 +34,7 @@ pin_led_ring = 33
 device_id = "DEV_ID"
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(pin_button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.add_event_detect(pin_button, GPIO.FALLING)
 GPIO.setup(pin_connect, GPIO.OUT)
 serverURL = "FLUD_BASE/juicebox.php"
 GPIO.output(pin_connect, False)
@@ -126,6 +127,11 @@ class Juicebox:
             print(response, file=sys.stderr)
             self.blink_twice()
             return response
+        except HTTPError as e:
+            response = e + ": Request to HTTP server returned unsuccessful status code during RFID authorization phase."
+            print(response, file=sys.stderr)
+            self.blink_twice()
+            return False, 0
         except Exception as e:
             response = e + ": This exception in Juicebox.check_if_authorized() lacks error handling. Codebase is incomplete."
             print(response, file=sys.stderr)
@@ -149,6 +155,11 @@ class Juicebox:
             print(response, file=sys.stderr)
             self.blink_twice()
             return response
+        except HTTPError as e:
+            response = e + ": Request to HTTP server returned unsuccessful status code during transaction completion phase."
+            print(response, file=sys.stderr)
+            self.blink_twice()
+            return False, 0
         except Exception as e:
             response = e + ": This exception in Juicebox.finish() lacks error handling. Codebase is incomplete."
             print(response, file=sys.stderr)
@@ -204,7 +215,6 @@ MIFAREReader = MFRC522.MFRC522()
 def main():
 
     juicebox = Juicebox()
-    GPIO.add_event_detect(pin_button, GPIO.FALLING)
 
     while continue_reading:
         if (GPIO.event_detected(pin_button) and juicebox.phase2 == False): # if the button is pressed
